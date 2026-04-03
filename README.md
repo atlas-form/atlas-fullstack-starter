@@ -8,22 +8,24 @@
 
 ## 使用方式
 
-先进入一个你准备存放项目的目录，然后执行：
+先进入一个你准备存放项目的目录，然后按你的系统选择一种方式。
+
+### macOS / Linux
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/atlas-form/atlas-fullstack-starter/main/init.sh | bash -s -- my-app
+```
+
+### Windows PowerShell
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/atlas-form/atlas-fullstack-starter/main/init.ps1))) -ProjectName my-app
 ```
 
 执行完成后，会生成：
 
 ```text
 ./my-app
-```
-
-如果你已经把这个脚手架拉到本地，也可以直接执行：
-
-```bash
-./init.sh my-app
 ```
 
 ## 初始化后先看哪里
