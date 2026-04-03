@@ -29,15 +29,24 @@ your-project/
 ## 快速使用
 
 ```bash
+cd /Users/ancient/src
+curl -fsSL https://raw.githubusercontent.com/atlas-form/atlas-fullstack-starter/main/init.sh | bash -s -- my-app
+```
+
+默认输出到当前目录：
+
+```text
+/Users/ancient/src/my-app
+```
+
+如果你已经把脚手架仓库拉到本地，也可以直接执行：
+
+```bash
 cd /Users/ancient/src/others/atlas-fullstack-starter
 ./init.sh my-app
 ```
 
-默认输出到：
-
-```text
-/Users/ancient/src/others/atlas-fullstack-starter/output/my-app
-```
+这时也会默认输出到你执行命令时所在的当前目录。
 
 如果要指定输出目录：
 
@@ -62,7 +71,7 @@ cd /Users/ancient/src/others/atlas-fullstack-starter
 ```bash
 BACKEND_SOURCE=/Users/ancient/src/rust/db-center-template \
 FRONTEND_SOURCE=/Users/ancient/src/frontend/react-mono-template \
-./init.sh demo-local
+/Users/ancient/src/others/atlas-fullstack-starter/init.sh demo-local /Users/ancient/src
 ```
 
 后端即使使用本地目录，也仍然会通过 `cargo-generate` 来生成，这样可以保持和后端模板设计一致。

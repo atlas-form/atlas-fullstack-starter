@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DEFAULT_OUTPUT_DIR="$SCRIPT_DIR/output"
+DEFAULT_OUTPUT_DIR="$(pwd)"
 
 BACKEND_SOURCE_DEFAULT="https://github.com/atlas-form/db-center-template.git"
 BACKEND_REF_DEFAULT="main"
@@ -24,6 +23,10 @@ usage() {
 示例：
   ./init.sh my-app
   ./init.sh my-app /Users/ancient/workspace
+
+远程执行示例：
+  curl -fsSL https://raw.githubusercontent.com/atlas-form/atlas-fullstack-starter/main/init.sh | bash -s -- my-app
+  curl -fsSL https://raw.githubusercontent.com/atlas-form/atlas-fullstack-starter/main/init.sh | bash -s -- my-app /Users/ancient/src
 
 可选环境变量：
   BACKEND_SOURCE   后端模板来源，可以是 git 地址或本地目录
