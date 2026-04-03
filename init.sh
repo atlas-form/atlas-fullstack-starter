@@ -7,7 +7,7 @@ DEFAULT_OUTPUT_DIR="$SCRIPT_DIR/output"
 BACKEND_SOURCE_DEFAULT="https://github.com/atlas-form/db-center-template.git"
 BACKEND_REF_DEFAULT="main"
 FRONTEND_SOURCE_DEFAULT="https://github.com/atlas-form/react-mono-template.git"
-FRONTEND_REF_DEFAULT="dev"
+FRONTEND_REF_DEFAULT="main"
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then

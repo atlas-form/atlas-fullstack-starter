@@ -53,7 +53,7 @@ cd /Users/ancient/src/others/atlas-fullstack-starter
 默认分支：
 
 - 后端：`main`
-- 前端：`dev`
+- 前端：`main`
 
 ## 本地开发调试
 
