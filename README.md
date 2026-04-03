@@ -1,113 +1,41 @@
 # Atlas Fullstack Starter
 
-这个目录本身就是一个脚手架。
+这是一个给普通用户使用的前后端一体项目脚手架。
 
-它的作用只有一件事：把前端模板和后端模板合并成一个全新的项目仓库，并且不保留模板原始仓库的 `.git` 记录。
+它的作用很简单：
 
-生成后项目根目录里的文档模板，都放在当前仓库的 `project_template/` 目录中，后续维护文档只需要改这里。
+帮你快速创建一个新的项目，并把前端、后端和后续和 AI 协作需要用到的文档目录一起准备好。
 
-## 它会做什么
+## 使用方式
 
-执行后会自动完成：
-
-1. 前端直接拉取模板
-2. 后端通过 `cargo-generate` 生成模板
-3. 创建 `user_docs/`、`requirements/`、`development_docs/`、`api_docs/` 这些工作目录
-4. 生成根目录用户文档和 AI 协议
-5. 组装成一个新的项目目录
-6. 删除模板里的 `.git`、`node_modules`、`target`、日志等开发残留
-7. 在新项目根目录重新执行 `git init`
-
-## 生成结果
-
-默认会生成下面这样的目录：
-
-```text
-your-project/
-├── user_docs/
-├── requirements/
-├── development_docs/
-├── api_docs/
-├── ai_protocols/
-├── AI_START.md
-├── frontend/
-├── backend/
-├── README.md
-└── .gitignore
-```
-
-## 快速使用
+先进入一个你准备存放项目的目录，然后执行：
 
 ```bash
-cd /Users/ancient/src
 curl -fsSL https://raw.githubusercontent.com/atlas-form/atlas-fullstack-starter/main/init.sh | bash -s -- my-app
 ```
 
-默认输出到当前目录：
+执行完成后，会生成：
 
 ```text
-/Users/ancient/src/my-app
+./my-app
 ```
 
-如果你已经把脚手架仓库拉到本地，也可以直接执行：
+如果你已经把这个脚手架拉到本地，也可以直接执行：
 
 ```bash
-cd /Users/ancient/src/others/atlas-fullstack-starter
 ./init.sh my-app
 ```
 
-这时也会默认输出到你执行命令时所在的当前目录。
+## 初始化后先看哪里
 
-如果要指定输出目录：
+生成完成后，先看新项目根目录里的这些内容：
 
-```bash
-./init.sh my-app /path/to/output
-```
+1. `user_docs/`
+2. `AI_START.md`
+3. `requirements/`
 
-## 默认模板来源
+## 给用户的原则
 
-- 后端模板：`https://github.com/atlas-form/db-center-template.git`
-- 前端模板：`https://github.com/atlas-form/react-mono-template.git`
-
-默认分支：
-
-- 后端：`main`
-- 前端：`main`
-
-## 本地开发调试
-
-如果你在本机已经有模板目录，可以直接覆盖来源，不需要真的走 GitHub：
-
-```bash
-BACKEND_SOURCE=/Users/ancient/src/rust/db-center-template \
-FRONTEND_SOURCE=/Users/ancient/src/frontend/react-mono-template \
-/Users/ancient/src/others/atlas-fullstack-starter/init.sh demo-local /Users/ancient/src
-```
-
-后端即使使用本地目录，也仍然会通过 `cargo-generate` 来生成，这样可以保持和后端模板设计一致。
-
-## 让 AI 帮用户执行
-
-用户只需要把类似下面的话发给 AI：
-
-```text
-请帮我用 atlas-fullstack-starter 初始化一个前后端项目。
-
-要求：
-1. 项目名叫 my-app
-2. 不要保留模板原来的 .git 目录
-3. 初始化完成后重新创建新的 git 仓库
-4. 如果过程中报错，你自己处理
-5. 完成后告诉我项目目录和下一步怎么启动
-```
-
-## 结果要求
-
-最终新项目必须满足：
-
-1. 根目录是一个新的 Git 仓库
-2. `frontend/` 和 `backend/` 内部不能带模板原仓库的 `.git`
-3. 根目录包含 `AI_START.md` 和 `ai_protocols/`
-4. 根目录包含 `user_docs/`
-5. 根目录包含 `requirements/`、`development_docs/`、`api_docs/`
-6. 用户可以直接在这个新仓库里继续开发和提交代码
+1. 先让 AI 检查环境
+2. 再把需求文档放进 `requirements/`
+3. 先确认开发文档，再让 AI 正式开发
