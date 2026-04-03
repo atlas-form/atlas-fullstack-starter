@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DEFAULT_OUTPUT_DIR="$(pwd)"
 
+STARTER_REPO_DEFAULT="https://github.com/atlas-form/atlas-fullstack-starter.git"
+STARTER_REF_DEFAULT="main"
 BACKEND_SOURCE_DEFAULT="https://github.com/atlas-form/db-center-template.git"
 BACKEND_REF_DEFAULT="main"
 FRONTEND_SOURCE_DEFAULT="https://github.com/atlas-form/react-mono-template.git"
@@ -29,6 +32,8 @@ usage() {
   curl -fsSL https://raw.githubusercontent.com/atlas-form/atlas-fullstack-starter/main/init.sh | bash -s -- my-app /Users/ancient/src
 
 可选环境变量：
+  STARTER_REPO     脚手架仓库地址，用于远程执行时拉取文档模板
+  STARTER_REF      脚手架仓库分支
   BACKEND_SOURCE   后端模板来源，可以是 git 地址或本地目录
   BACKEND_REF      后端分支、标签或提交，仅对 git 地址有效
   FRONTEND_SOURCE  前端模板来源，可以是 git 地址或本地目录
@@ -90,7 +95,6 @@ generate_backend_with_cargo_generate() {
   local destination_dir="$3"
 
   require_command cargo-generate
-
   mkdir -p "$(dirname "$destination_dir")"
 
   if is_git_url "$source"; then
@@ -128,47 +132,44 @@ copy_frontend_template() {
   fi
 }
 
-clean_generated_files() {
-  local project_dir="$1"
+resolve_template_source() {
+  local starter_repo="$1"
+  local starter_ref="$2"
+  local starter_tmp_dir="$3"
 
-  find "$project_dir" -name .git -type d -prune -exec rm -rf {} +
-  find "$project_dir" -name node_modules -type d -prune -exec rm -rf {} +
-  find "$project_dir" -name target -type d -prune -exec rm -rf {} +
-  find "$project_dir" -name logs -type d -prune -exec rm -rf {} +
-  find "$project_dir" -name dist -type d -prune -exec rm -rf {} +
-  find "$project_dir" -name .turbo -type d -prune -exec rm -rf {} +
-  find "$project_dir" -name tmp -type d -prune -exec rm -rf {} +
-  find "$project_dir" -name .DS_Store -type f -delete
+  if [ -d "$SCRIPT_DIR/project_template" ] && [ -f "$SCRIPT_DIR/project_template/ROOT_README.md.tpl" ]; then
+    echo "$SCRIPT_DIR/project_template"
+    return 0
+  fi
+
+  git clone --depth 1 --branch "$starter_ref" "$starter_repo" "$starter_tmp_dir" >/dev/null
+  echo "$starter_tmp_dir/project_template"
 }
 
-write_root_readme() {
+copy_project_template() {
+  local template_source_dir="$1"
+  local project_dir="$2"
+
+  if [ ! -d "$template_source_dir" ]; then
+    echo "错误：文档模板目录不存在：$template_source_dir"
+    exit 1
+  fi
+
+  (cd "$template_source_dir" && tar -cf - .) | (cd "$project_dir" && tar -xf -)
+}
+
+render_root_readme() {
   local project_dir="$1"
   local project_name="$2"
 
-  cat > "$project_dir/README.md" <<EOF
-# $project_name
+  if [ ! -f "$project_dir/ROOT_README.md.tpl" ]; then
+    echo "错误：缺少 ROOT_README.md.tpl 模板"
+    exit 1
+  fi
 
-这是一个由 Atlas Fullstack Starter 生成的前后端一体项目。
-
-## 目录结构
-
-- \`frontend/\`：前端项目
-- \`backend/\`：后端项目
-
-## 推荐使用方式
-
-1. 先让 AI 检查本机环境是否能启动前端和后端
-2. 让用户先描述业务需求
-3. 让 AI 先生成服务端开发文档和数据库表结构
-4. 用户确认设计后，再开始正式开发
-
-## 启动前建议
-
-1. 阅读 \`frontend/README.md\`
-2. 阅读 \`backend/README.md\`
-3. 阅读 \`backend/user_docs/\` 和 \`backend/ai_protocols/\`
-4. 让 AI 自己处理缺少依赖、环境报错、数据库配置等问题
-EOF
+  sed "s/__PROJECT_NAME__/$project_name/g" \
+    "$project_dir/ROOT_README.md.tpl" > "$project_dir/README.md"
+  rm -f "$project_dir/ROOT_README.md.tpl"
 }
 
 write_root_gitignore() {
@@ -204,6 +205,19 @@ tmp/
 EOF
 }
 
+clean_generated_files() {
+  local project_dir="$1"
+
+  find "$project_dir" -name .git -type d -prune -exec rm -rf {} +
+  find "$project_dir" -name node_modules -type d -prune -exec rm -rf {} +
+  find "$project_dir" -name target -type d -prune -exec rm -rf {} +
+  find "$project_dir" -name logs -type d -prune -exec rm -rf {} +
+  find "$project_dir" -name dist -type d -prune -exec rm -rf {} +
+  find "$project_dir" -name .turbo -type d -prune -exec rm -rf {} +
+  find "$project_dir" -name tmp -type d -prune -exec rm -rf {} +
+  find "$project_dir" -name .DS_Store -type f -delete
+}
+
 PROJECT_NAME="${1:-}"
 OUTPUT_DIR="${2:-$DEFAULT_OUTPUT_DIR}"
 
@@ -220,6 +234,8 @@ fi
 require_command git
 require_command tar
 
+STARTER_REPO="${STARTER_REPO:-$STARTER_REPO_DEFAULT}"
+STARTER_REF="${STARTER_REF:-$STARTER_REF_DEFAULT}"
 BACKEND_SOURCE="${BACKEND_SOURCE:-$BACKEND_SOURCE_DEFAULT}"
 BACKEND_REF="${BACKEND_REF:-$BACKEND_REF_DEFAULT}"
 FRONTEND_SOURCE="${FRONTEND_SOURCE:-$FRONTEND_SOURCE_DEFAULT}"
@@ -231,6 +247,7 @@ FRONTEND_DIR="$TARGET_DIR/frontend"
 TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/atlas-fullstack-starter.XXXXXX")"
 TMP_BACKEND_DIR="$TMP_DIR/backend"
 TMP_FRONTEND_DIR="$TMP_DIR/frontend"
+TMP_STARTER_DIR="$TMP_DIR/starter"
 
 cleanup() {
   rm -rf "$TMP_DIR"
@@ -253,12 +270,16 @@ generate_backend_with_cargo_generate "$BACKEND_SOURCE" "$BACKEND_REF" "$BACKEND_
 
 copy_frontend_template "$FRONTEND_SOURCE" "$FRONTEND_REF" "$TMP_FRONTEND_DIR" "$FRONTEND_DIR"
 
+echo "==> 拉取脚手架文档模板"
+TEMPLATE_SOURCE_DIR="$(resolve_template_source "$STARTER_REPO" "$STARTER_REF" "$TMP_STARTER_DIR")"
+copy_project_template "$TEMPLATE_SOURCE_DIR" "$TARGET_DIR"
+
+echo "==> 渲染根目录 README 和 .gitignore"
+render_root_readme "$TARGET_DIR" "$PROJECT_NAME"
+write_root_gitignore "$TARGET_DIR"
+
 echo "==> 清理模板残留文件"
 clean_generated_files "$TARGET_DIR"
-
-echo "==> 生成根目录 README 和 .gitignore"
-write_root_readme "$TARGET_DIR" "$PROJECT_NAME"
-write_root_gitignore "$TARGET_DIR"
 
 echo "==> 初始化新的 git 仓库"
 git -C "$TARGET_DIR" init -b main >/dev/null 2>&1 || {
@@ -273,7 +294,13 @@ echo "模板仓库原本的 .git 目录不会保留到用户项目中"
 echo
 echo "目录结构："
 echo "  $TARGET_DIR/"
+echo "  ├── user_docs/"
+echo "  ├── requirements/"
+echo "  ├── development_docs/"
+echo "  ├── api_docs/"
 echo "  ├── frontend/"
 echo "  ├── backend/"
 echo "  ├── README.md"
+echo "  ├── AI_START.md"
+echo "  ├── ai_protocols/"
 echo "  └── .gitignore"

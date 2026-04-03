@@ -4,15 +4,19 @@
 
 它的作用只有一件事：把前端模板和后端模板合并成一个全新的项目仓库，并且不保留模板原始仓库的 `.git` 记录。
 
+生成后项目根目录里的文档模板，都放在当前仓库的 `project_template/` 目录中，后续维护文档只需要改这里。
+
 ## 它会做什么
 
 执行后会自动完成：
 
 1. 前端直接拉取模板
 2. 后端通过 `cargo-generate` 生成模板
-3. 组装成一个新的项目目录
-4. 删除模板里的 `.git`、`node_modules`、`target`、日志等开发残留
-5. 在新项目根目录重新执行 `git init`
+3. 创建 `user_docs/`、`requirements/`、`development_docs/`、`api_docs/` 这些工作目录
+4. 生成根目录用户文档和 AI 协议
+5. 组装成一个新的项目目录
+6. 删除模板里的 `.git`、`node_modules`、`target`、日志等开发残留
+7. 在新项目根目录重新执行 `git init`
 
 ## 生成结果
 
@@ -20,6 +24,12 @@
 
 ```text
 your-project/
+├── user_docs/
+├── requirements/
+├── development_docs/
+├── api_docs/
+├── ai_protocols/
+├── AI_START.md
 ├── frontend/
 ├── backend/
 ├── README.md
@@ -97,4 +107,7 @@ FRONTEND_SOURCE=/Users/ancient/src/frontend/react-mono-template \
 
 1. 根目录是一个新的 Git 仓库
 2. `frontend/` 和 `backend/` 内部不能带模板原仓库的 `.git`
-3. 用户可以直接在这个新仓库里继续开发和提交代码
+3. 根目录包含 `AI_START.md` 和 `ai_protocols/`
+4. 根目录包含 `user_docs/`
+5. 根目录包含 `requirements/`、`development_docs/`、`api_docs/`
+6. 用户可以直接在这个新仓库里继续开发和提交代码
