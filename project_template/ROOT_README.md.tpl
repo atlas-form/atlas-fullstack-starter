@@ -14,18 +14,20 @@
 
 ## 推荐使用方式
 
-1. 先让 AI 检查本机环境是否能启动前端和后端
-2. 把业务需求文档放进 `requirements/`
-3. 让 AI 先生成 `development_docs/backend/` 下的后端开发文档和数据库表结构
-4. 用户确认后端设计
-5. 让 AI 再生成 `api_docs/` 和 `development_docs/frontend/`
-6. 用户确认后，再开始正式开发
+1. 先让 AI 读取根目录协议和说明文档
+2. 再让 AI 检查本机环境是否能启动前端和后端
+3. 把业务需求文档放进 `requirements/`
+4. 让 AI 先生成 `development_docs/backend/` 下的后端开发文档和数据库表结构
+5. 用户确认后端设计
+6. 让 AI 再生成 `api_docs/` 和 `development_docs/frontend/`
+7. 用户确认后，再开始正式开发
 
 ## 启动前建议
 
 1. 阅读根目录 `user_docs/`
 2. 阅读根目录 `AI_START.md`
 3. 阅读根目录 `ai_protocols/`
-4. 阅读 `backend/user_docs/` 和 `backend/ai_protocols/`
-5. 前端实现阶段再阅读 `frontend/` 内文档
-6. 让 AI 自己处理缺少依赖、环境报错、数据库配置等问题
+4. 阅读 `requirements/`、`development_docs/`、`api_docs/` 下的模板文件
+5. 阅读 `backend/user_docs/` 和 `backend/ai_protocols/`
+6. 前端实现阶段再阅读 `frontend/` 内文档
+7. 让 AI 自己处理缺少依赖、环境报错、数据库配置等问题
