@@ -159,6 +159,42 @@ function Copy-ProjectTemplate {
     Copy-DirectoryContents -SourceDir $TemplateSourceDir -TargetDir $ProjectDir
 }
 
+function Merge-ApiDocs {
+    param(
+        [string]$ProjectDir,
+        [string]$BackendDir
+    )
+
+    $backendApiDir = Join-Path $BackendDir "API_CONTRACTS"
+    $rootApiDir = Join-Path $ProjectDir "API_DOCS"
+
+    if (-not (Test-Path -LiteralPath $backendApiDir -PathType Container)) {
+        return
+    }
+
+    New-Item -ItemType Directory -Force -Path $rootApiDir | Out-Null
+    Copy-DirectoryContents -SourceDir $backendApiDir -TargetDir $rootApiDir
+    Remove-Item -LiteralPath $backendApiDir -Recurse -Force
+
+    Get-ChildItem -LiteralPath $BackendDir -Recurse -File -Filter "*.md" | ForEach-Object {
+        $content = Get-Content -LiteralPath $_.FullName -Raw
+        $content = $content.Replace("`API_CONTRACTS/", "`../API_DOCS/")
+        $content = $content.Replace("API_CONTRACTS/", "../API_DOCS/")
+        $content = $content.Replace("`API_CONTRACTS`", "`../API_DOCS`")
+        $content = $content.Replace("API_CONTRACTS", "../API_DOCS")
+        Set-Content -LiteralPath $_.FullName -Value $content -Encoding UTF8
+    }
+
+    Get-ChildItem -LiteralPath $rootApiDir -Recurse -File -Filter "*.md" | ForEach-Object {
+        $content = Get-Content -LiteralPath $_.FullName -Raw
+        $content = $content.Replace("`API_CONTRACTS/", "`API_DOCS/")
+        $content = $content.Replace("API_CONTRACTS/", "API_DOCS/")
+        $content = $content.Replace("`API_CONTRACTS`", "`API_DOCS`")
+        $content = $content.Replace("API_CONTRACTS", "API_DOCS")
+        Set-Content -LiteralPath $_.FullName -Value $content -Encoding UTF8
+    }
+}
+
 function Render-RootReadme {
     param(
         [string]$ProjectDir,
@@ -273,6 +309,9 @@ try {
     $templateSourceDir = Resolve-TemplateSource -StarterRepo $StarterRepo -StarterRef $StarterRef -StarterTmpDir $TmpStarterDir
     Copy-ProjectTemplate -TemplateSourceDir $templateSourceDir -ProjectDir $TargetDir
 
+    Write-Host "==> 统一 API 文档到根目录"
+    Merge-ApiDocs -ProjectDir $TargetDir -BackendDir $BackendDir
+
     Write-Host "==> 渲染根目录 README 和 .gitignore"
     Render-RootReadme -ProjectDir $TargetDir -ProjectNameValue $ProjectName
     Write-RootGitignore -ProjectDir $TargetDir
@@ -299,14 +338,15 @@ try {
     Write-Host "目录结构："
     Write-Host "  $TargetDir/"
     Write-Host "  ├── user_docs/"
-    Write-Host "  ├── requirements/"
-    Write-Host "  ├── development_docs/"
-    Write-Host "  ├── api_docs/"
+    Write-Host "  ├── REQUIREMENTS/"
+    Write-Host "  ├── DEVELOPMENT_DOCS/"
+    Write-Host "  ├── API_DOCS/"
     Write-Host "  ├── frontend/"
     Write-Host "  ├── backend/"
+    Write-Host "  ├── AGENTS.md"
     Write-Host "  ├── README.md"
-    Write-Host "  ├── AI_START.md"
-    Write-Host "  ├── ai_protocols/"
+    Write-Host "  ├── USER_START.md"
+    Write-Host "  ├── AI_PROTOCOLS/"
     Write-Host "  └── .gitignore"
 }
 finally {

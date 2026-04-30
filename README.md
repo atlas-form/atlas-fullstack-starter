@@ -37,11 +37,12 @@ curl -fsSL https://raw.githubusercontent.com/atlas-form/atlas-fullstack-starter/
 生成完成后，先看新项目根目录里的这些内容：
 
 1. `user_docs/`
-2. `AI_START.md`
-3. `requirements/`
+2. `AGENTS.md`
+3. `USER_START.md`
+4. `REQUIREMENTS/`
 
 ## 给用户的原则
 
 1. 先让 AI 检查环境
-2. 再把需求文档放进 `requirements/`
+2. 再通过 `REQUIREMENTS/` 或聊天描述业务需求
 3. 先确认开发文档，再让 AI 正式开发

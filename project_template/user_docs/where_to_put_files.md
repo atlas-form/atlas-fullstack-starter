@@ -3,10 +3,10 @@
 ## 目录说明
 
 - `user_docs/`：给你阅读的说明文档
-- `requirements/`：你放需求文档
-- `development_docs/backend/`：AI 写后端开发文档
-- `development_docs/frontend/`：AI 写前端开发文档
-- `api_docs/`：AI 写接口文档
+- `REQUIREMENTS/`：你放需求文档
+- `DEVELOPMENT_DOCS/backend/`：AI 写后端开发文档
+- `DEVELOPMENT_DOCS/frontend/`：AI 写前端开发文档
+- `API_DOCS/`：AI 写 API 文档，框架已有 API 和新业务 API 都放这里
 - `frontend/`：前端代码
 - `backend/`：后端代码
 
@@ -15,6 +15,6 @@
 通常你只需要关心这几个目录：
 
 1. `user_docs/`
-2. `requirements/`
-3. `development_docs/`
-4. `api_docs/`
+2. `REQUIREMENTS/`
+3. `DEVELOPMENT_DOCS/`
+4. `API_DOCS/`

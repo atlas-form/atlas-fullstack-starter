@@ -158,6 +158,45 @@ copy_project_template() {
   (cd "$template_source_dir" && tar -cf - .) | (cd "$project_dir" && tar -xf -)
 }
 
+unify_api_docs() {
+  local project_dir="$1"
+  local backend_dir="$2"
+  local backend_api_dir="$backend_dir/API_CONTRACTS"
+  local root_api_dir="$project_dir/API_DOCS"
+
+  if [ ! -d "$backend_api_dir" ]; then
+    return 0
+  fi
+
+  mkdir -p "$root_api_dir"
+  (cd "$backend_api_dir" && tar -cf - .) | (cd "$root_api_dir" && tar -xf -)
+  rm -rf "$backend_api_dir"
+
+  find "$backend_dir" -type f -name '*.md' -print0 |
+    while IFS= read -r -d '' file; do
+      tmp_file="$file.tmp"
+      sed \
+        -e 's#`API_CONTRACTS/#`../API_DOCS/#g' \
+        -e 's#API_CONTRACTS/#../API_DOCS/#g' \
+        -e 's#`API_CONTRACTS`#`../API_DOCS`#g' \
+        -e 's#API_CONTRACTS#../API_DOCS#g' \
+        "$file" > "$tmp_file"
+      mv "$tmp_file" "$file"
+    done
+
+  find "$root_api_dir" -type f -name '*.md' -print0 |
+    while IFS= read -r -d '' file; do
+      tmp_file="$file.tmp"
+      sed \
+        -e 's#`API_CONTRACTS/#`API_DOCS/#g' \
+        -e 's#API_CONTRACTS/#API_DOCS/#g' \
+        -e 's#`API_CONTRACTS`#`API_DOCS`#g' \
+        -e 's#API_CONTRACTS#API_DOCS#g' \
+        "$file" > "$tmp_file"
+      mv "$tmp_file" "$file"
+    done
+}
+
 render_root_readme() {
   local project_dir="$1"
   local project_name="$2"
@@ -274,6 +313,9 @@ echo "==> 拉取脚手架文档模板"
 TEMPLATE_SOURCE_DIR="$(resolve_template_source "$STARTER_REPO" "$STARTER_REF" "$TMP_STARTER_DIR")"
 copy_project_template "$TEMPLATE_SOURCE_DIR" "$TARGET_DIR"
 
+echo "==> 统一 API 文档到根目录"
+unify_api_docs "$TARGET_DIR" "$BACKEND_DIR"
+
 echo "==> 渲染根目录 README 和 .gitignore"
 render_root_readme "$TARGET_DIR" "$PROJECT_NAME"
 write_root_gitignore "$TARGET_DIR"
@@ -295,12 +337,13 @@ echo
 echo "目录结构："
 echo "  $TARGET_DIR/"
 echo "  ├── user_docs/"
-echo "  ├── requirements/"
-echo "  ├── development_docs/"
-echo "  ├── api_docs/"
+echo "  ├── REQUIREMENTS/"
+echo "  ├── DEVELOPMENT_DOCS/"
+echo "  ├── API_DOCS/"
 echo "  ├── frontend/"
 echo "  ├── backend/"
+echo "  ├── AGENTS.md"
 echo "  ├── README.md"
-echo "  ├── AI_START.md"
-echo "  ├── ai_protocols/"
+echo "  ├── USER_START.md"
+echo "  ├── AI_PROTOCOLS/"
 echo "  └── .gitignore"
