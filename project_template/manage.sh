@@ -88,7 +88,7 @@ stop_process() {
   local pid
   pid="$(cat "$pid_file")"
 
-  echo "==> 停止 $name，PID: $pid"
+  echo "==> 停止 ${name}，PID: $pid"
   kill "$pid" >/dev/null 2>&1 || true
 
   local i
@@ -117,6 +117,28 @@ status_process() {
     rm -f "$pid_file"
     echo "$name 未运行"
   fi
+}
+
+print_frontend_url() {
+  local app="$1"
+  local log_file="$2"
+  local url=""
+  local i
+
+  for i in 1 2 3 4 5; do
+    url="$(grep -E 'Local:' "$log_file" 2>/dev/null | grep -Eo 'https?://(localhost|127\.0\.0\.1|\[::1\])(:[0-9]+)?/?' | head -n 1 || true)"
+    if [ -z "$url" ]; then
+      url="$(grep -Eo 'https?://(localhost|127\.0\.0\.1|\[::1\])(:[0-9]+)?/?' "$log_file" 2>/dev/null | head -n 1 || true)"
+    fi
+    if [ -n "$url" ]; then
+      echo "访问地址：$url"
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "访问地址：请查看日志中的 Local 地址：$log_file"
+  echo "提示：Vite 默认通常是 http://localhost:5173/，如果端口被占用会自动顺延。"
 }
 
 backend() {
@@ -168,8 +190,13 @@ frontend() {
   case "$action" in
     start)
       require_command pnpm
-      start_process "frontend:$app" "$pid_file" "$log_file" \
-        pnpm -C "$app_dir" dev
+      if is_running "$pid_file"; then
+        echo "frontend:$app 已在运行，PID: $(cat "$pid_file")"
+      else
+        start_process "frontend:$app" "$pid_file" "$log_file" \
+          pnpm -C "$app_dir" dev
+      fi
+      print_frontend_url "$app" "$log_file"
       ;;
     stop)
       stop_process "frontend:$app" "$pid_file"

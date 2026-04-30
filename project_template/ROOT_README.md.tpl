@@ -67,6 +67,8 @@ AI 负责：
 ./manage.sh frontend admin start
 ```
 
+启动成功后会输出访问地址，例如 `http://localhost:5173/`。如果端口被占用，Vite 会自动顺延到下一个可用端口，实际地址以脚本输出为准。
+
 停止前端 app：
 
 ```bash
