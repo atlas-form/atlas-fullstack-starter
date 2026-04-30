@@ -325,6 +325,7 @@ try {
     Write-Host "  ├── backend/"
     Write-Host "  ├── AGENTS.md"
     Write-Host "  ├── README.md"
+    Write-Host "  ├── manage.sh"
     Write-Host "  ├── AI_PROTOCOLS/"
     Write-Host "  └── .gitignore"
 }

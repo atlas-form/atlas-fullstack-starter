@@ -10,6 +10,7 @@
 - `API_DOCS/`：项目唯一 API 文档入口
 - `frontend/`：前端项目
 - `backend/`：后端项目
+- `manage.sh`：本地启动、停止前后端服务的脚本
 - `AGENTS.md`：AI 统一入口，负责指向前端和后端子项目规则
 
 ## 快速开始
@@ -46,6 +47,45 @@ AI 负责：
 3. 一定先确认后端开发文档
 4. 前端开发应以根目录 `API_DOCS/` 里的接口文档为准
 
+## 常用命令
+
+启动后端：
+
+```bash
+./manage.sh backend start
+```
+
+停止后端：
+
+```bash
+./manage.sh backend stop
+```
+
+启动前端 app：
+
+```bash
+./manage.sh frontend admin start
+```
+
+停止前端 app：
+
+```bash
+./manage.sh frontend admin stop
+```
+
+查看状态：
+
+```bash
+./manage.sh backend status
+./manage.sh frontend admin status
+```
+
+日志放在：
+
+```text
+temp/logs/
+```
+
 ## 新对话提示词
 
 你可以在每次开启新对话时，把下面这段发给 AI：
@@ -75,8 +115,9 @@ AI 负责：
 1. `temp/REQUIREMENTS/`：放需求文档，也可以不用，直接在聊天里描述需求
 2. `temp/DEVELOPMENT_DOCS/`：AI 写前后端开发文档
 3. `API_DOCS/`：AI 写 API 文档，框架已有 API 和新业务 API 都放这里
-4. `frontend/`：前端代码
-5. `backend/`：后端代码
+4. `manage.sh`：启动、停止、查看服务状态
+5. `frontend/`：前端代码
+6. `backend/`：后端代码
 
 ## 如果报错怎么办
 
