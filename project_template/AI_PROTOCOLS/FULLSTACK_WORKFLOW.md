@@ -5,13 +5,13 @@
 ## 标准流程
 
 0. AI 先阅读根目录协议，再开始回答用户问题
-1. 用户通过 `REQUIREMENTS/` 或聊天消息提供需求
+1. 用户通过 `temp/REQUIREMENTS/` 或聊天消息提供需求
 2. AI 阅读需求文档，或整理聊天中的需求摘要和待确认问题
-3. AI 先写 `DEVELOPMENT_DOCS/backend/` 下的后端开发文档
+3. AI 先写 `temp/DEVELOPMENT_DOCS/backend/` 下的后端开发文档
 4. 后端开发文档必须包含数据库表结构、接口、鉴权、业务流程
 5. 用户确认后端开发文档
 6. AI 写 `API_DOCS/` 下的前后端协作接口文档
-7. AI 再写 `DEVELOPMENT_DOCS/frontend/` 下的前端开发文档
+7. AI 再写 `temp/DEVELOPMENT_DOCS/frontend/` 下的前端开发文档
 8. 用户确认
 9. AI 开始后端开发
 10. AI 开始前端开发和联调

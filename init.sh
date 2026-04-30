@@ -221,26 +221,8 @@ write_root_gitignore() {
 .claude/
 .serena/
 
-# frontend
-frontend/node_modules/
-frontend/dist/
-frontend/.turbo/
-frontend/.env
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
-
-# backend
-backend/target/
-backend/logs/
-backend/tmp/
-backend/.env
-backend/sh_test/
-
-# misc
 output/
-tmp/
+temp/
 EOF
 }
 
@@ -336,14 +318,11 @@ echo "模板仓库原本的 .git 目录不会保留到用户项目中"
 echo
 echo "目录结构："
 echo "  $TARGET_DIR/"
-echo "  ├── user_docs/"
-echo "  ├── REQUIREMENTS/"
-echo "  ├── DEVELOPMENT_DOCS/"
+echo "  ├── temp/"
 echo "  ├── API_DOCS/"
 echo "  ├── frontend/"
 echo "  ├── backend/"
 echo "  ├── AGENTS.md"
 echo "  ├── README.md"
-echo "  ├── USER_START.md"
 echo "  ├── AI_PROTOCOLS/"
 echo "  └── .gitignore"

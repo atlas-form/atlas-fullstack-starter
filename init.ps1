@@ -222,26 +222,8 @@ function Write-RootGitignore {
 .claude/
 .serena/
 
-# frontend
-frontend/node_modules/
-frontend/dist/
-frontend/.turbo/
-frontend/.env
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
-
-# backend
-backend/target/
-backend/logs/
-backend/tmp/
-backend/.env
-backend/sh_test/
-
-# misc
 output/
-tmp/
+temp/
 '@
 
     Set-Content -LiteralPath (Join-Path $ProjectDir ".gitignore") -Value $content -Encoding UTF8
@@ -337,15 +319,12 @@ try {
     Write-Host ""
     Write-Host "目录结构："
     Write-Host "  $TargetDir/"
-    Write-Host "  ├── user_docs/"
-    Write-Host "  ├── REQUIREMENTS/"
-    Write-Host "  ├── DEVELOPMENT_DOCS/"
+    Write-Host "  ├── temp/"
     Write-Host "  ├── API_DOCS/"
     Write-Host "  ├── frontend/"
     Write-Host "  ├── backend/"
     Write-Host "  ├── AGENTS.md"
     Write-Host "  ├── README.md"
-    Write-Host "  ├── USER_START.md"
     Write-Host "  ├── AI_PROTOCOLS/"
     Write-Host "  └── .gitignore"
 }
