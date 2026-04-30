@@ -56,7 +56,7 @@ start_process() {
   shift 3
 
   if is_running "$pid_file"; then
-    echo "$name 已在运行，PID: $(cat "$pid_file")"
+    echo "${name} 已在运行，PID: $(cat "$pid_file")"
     return 0
   fi
 
@@ -68,9 +68,9 @@ start_process() {
   sleep 1
 
   if is_running "$pid_file"; then
-    echo "$name 已启动，PID: $(cat "$pid_file")"
+    echo "${name} 已启动，PID: $(cat "$pid_file")"
   else
-    echo "错误：$name 启动失败，请查看日志：$log_file"
+    echo "错误：${name} 启动失败，请查看日志：$log_file"
     exit 1
   fi
 }
@@ -81,7 +81,7 @@ stop_process() {
 
   if ! is_running "$pid_file"; then
     rm -f "$pid_file"
-    echo "$name 未运行"
+    echo "${name} 未运行"
     return 0
   fi
 
@@ -95,7 +95,7 @@ stop_process() {
   for i in 1 2 3 4 5; do
     if ! kill -0 "$pid" >/dev/null 2>&1; then
       rm -f "$pid_file"
-      echo "$name 已停止"
+      echo "${name} 已停止"
       return 0
     fi
     sleep 1
@@ -104,7 +104,7 @@ stop_process() {
   echo "==> 强制停止 $name"
   kill -9 "$pid" >/dev/null 2>&1 || true
   rm -f "$pid_file"
-  echo "$name 已停止"
+  echo "${name} 已停止"
 }
 
 status_process() {
@@ -112,10 +112,10 @@ status_process() {
   local pid_file="$2"
 
   if is_running "$pid_file"; then
-    echo "$name 运行中，PID: $(cat "$pid_file")"
+    echo "${name} 运行中，PID: $(cat "$pid_file")"
   else
     rm -f "$pid_file"
-    echo "$name 未运行"
+    echo "${name} 未运行"
   fi
 }
 
@@ -178,35 +178,35 @@ frontend() {
     exit 1
   fi
 
-  local app_dir="$ROOT_DIR/frontend/apps/$app"
+  local app_dir="$ROOT_DIR/frontend/apps/${app}"
   if [ ! -d "$app_dir" ]; then
-    echo "错误：前端 app 不存在：frontend/apps/$app"
+    echo "错误：前端 app 不存在：frontend/apps/${app}"
     exit 1
   fi
 
-  local pid_file="$RUN_DIR/frontend-$app.pid"
-  local log_file="$LOG_DIR/frontend-$app.log"
+  local pid_file="$RUN_DIR/frontend-${app}.pid"
+  local log_file="$LOG_DIR/frontend-${app}.log"
 
   case "$action" in
     start)
       require_command pnpm
       if is_running "$pid_file"; then
-        echo "frontend:$app 已在运行，PID: $(cat "$pid_file")"
+        echo "frontend:${app} 已在运行，PID: $(cat "$pid_file")"
       else
-        start_process "frontend:$app" "$pid_file" "$log_file" \
+        start_process "frontend:${app}" "$pid_file" "$log_file" \
           pnpm -C "$app_dir" dev
       fi
       print_frontend_url "$app" "$log_file"
       ;;
     stop)
-      stop_process "frontend:$app" "$pid_file"
+      stop_process "frontend:${app}" "$pid_file"
       ;;
     restart)
-      stop_process "frontend:$app" "$pid_file"
+      stop_process "frontend:${app}" "$pid_file"
       frontend "$app" start
       ;;
     status)
-      status_process "frontend:$app" "$pid_file"
+      status_process "frontend:${app}" "$pid_file"
       ;;
     *)
       usage
