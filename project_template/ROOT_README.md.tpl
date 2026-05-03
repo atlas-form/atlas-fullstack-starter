@@ -61,6 +61,12 @@ AI 负责：
 ./manage.sh backend stop
 ```
 
+安装前端依赖：
+
+```bash
+./manage.sh frontend install
+```
+
 启动前端 app：
 
 ```bash

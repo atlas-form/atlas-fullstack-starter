@@ -11,11 +11,13 @@ usage() {
   cat <<'EOF'
 用法：
   ./manage.sh backend start|stop|restart|status
+  ./manage.sh frontend install
   ./manage.sh frontend <app> start|stop|restart|status
 
 示例：
   ./manage.sh backend start
   ./manage.sh backend stop
+  ./manage.sh frontend install
   ./manage.sh frontend admin start
   ./manage.sh frontend admin stop
 
@@ -60,19 +62,81 @@ start_process() {
     return 0
   fi
 
-  echo "==> 启动 $name"
+  echo "==> 启动 ${name}"
   echo "    日志：$log_file"
 
+  : > "$log_file"
   nohup "$@" >"$log_file" 2>&1 &
   echo "$!" > "$pid_file"
-  sleep 1
+}
 
-  if is_running "$pid_file"; then
-    echo "${name} 已启动，PID: $(cat "$pid_file")"
-  else
-    echo "错误：${name} 启动失败，请查看日志：$log_file"
-    exit 1
+print_log_tail() {
+  local log_file="$1"
+
+  if [ -f "$log_file" ]; then
+    echo
+    echo "最近日志："
+    tail -n 80 "$log_file"
   fi
+}
+
+fail_start() {
+  local name="$1"
+  local pid_file="$2"
+  local log_file="$3"
+
+  rm -f "$pid_file"
+  echo "错误：${name} 启动失败"
+  echo "日志：$log_file"
+  print_log_tail "$log_file"
+  exit 1
+}
+
+wait_process_stable() {
+  local name="$1"
+  local pid_file="$2"
+  local log_file="$3"
+  local seconds="${4:-5}"
+  local i
+
+  for ((i = 1; i <= seconds; i++)); do
+    if ! is_running "$pid_file"; then
+      fail_start "$name" "$pid_file" "$log_file"
+    fi
+    sleep 1
+  done
+
+  echo "${name} 已启动，PID: $(cat "$pid_file")"
+}
+
+wait_http_url() {
+  local name="$1"
+  local pid_file="$2"
+  local log_file="$3"
+  local url="$4"
+  local seconds="${5:-120}"
+  local i
+
+  echo "    等待访问地址：${url}"
+
+  for ((i = 1; i <= seconds; i++)); do
+    if ! is_running "$pid_file"; then
+      fail_start "$name" "$pid_file" "$log_file"
+    fi
+
+    if command -v curl >/dev/null 2>&1 && curl -sS -o /dev/null --max-time 2 "$url" >/dev/null 2>&1; then
+      echo "${name} 已启动，PID: $(cat "$pid_file")"
+      echo "访问地址：${url}"
+      return 0
+    fi
+
+    sleep 1
+  done
+
+  echo "错误：${name} 进程仍在运行，但没有在 ${seconds} 秒内连上访问地址"
+  echo "日志：$log_file"
+  print_log_tail "$log_file"
+  exit 1
 }
 
 stop_process() {
@@ -101,7 +165,7 @@ stop_process() {
     sleep 1
   done
 
-  echo "==> 强制停止 $name"
+  echo "==> 强制停止 ${name}"
   kill -9 "$pid" >/dev/null 2>&1 || true
   rm -f "$pid_file"
   echo "${name} 已停止"
@@ -121,24 +185,71 @@ status_process() {
 
 print_frontend_url() {
   local app="$1"
-  local log_file="$2"
+  local pid_file="$2"
+  local log_file="$3"
   local url=""
   local i
 
-  for i in 1 2 3 4 5; do
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    if ! is_running "$pid_file"; then
+      fail_start "frontend:${app}" "$pid_file" "$log_file"
+    fi
+
     url="$(grep -E 'Local:' "$log_file" 2>/dev/null | grep -Eo 'https?://(localhost|127\.0\.0\.1|\[::1\])(:[0-9]+)?/?' | head -n 1 || true)"
     if [ -z "$url" ]; then
       url="$(grep -Eo 'https?://(localhost|127\.0\.0\.1|\[::1\])(:[0-9]+)?/?' "$log_file" 2>/dev/null | head -n 1 || true)"
     fi
     if [ -n "$url" ]; then
+      echo "frontend:${app} 已启动，PID: $(cat "$pid_file")"
       echo "访问地址：$url"
       return 0
     fi
     sleep 1
   done
 
-  echo "访问地址：请查看日志中的 Local 地址：$log_file"
-  echo "提示：Vite 默认通常是 http://localhost:5173/，如果端口被占用会自动顺延。"
+  echo "错误：frontend:${app} 未能在日志中找到访问地址"
+  echo "日志：$log_file"
+  print_log_tail "$log_file"
+  exit 1
+}
+
+install_frontend_deps() {
+  require_command pnpm
+  echo "==> 安装前端依赖"
+  pnpm -C "$ROOT_DIR/frontend" install
+}
+
+backend_url() {
+  local config_file="$ROOT_DIR/backend/config/services.toml"
+  local port=""
+
+  if [ -f "$config_file" ]; then
+    port="$(awk '
+      /^\[http\]/ { in_http = 1; next }
+      /^\[/ { in_http = 0 }
+      in_http && /^[[:space:]]*port[[:space:]]*=/ {
+        gsub(/[^0-9]/, "", $0)
+        print $0
+        exit
+      }
+    ' "$config_file")"
+  fi
+
+  if [ -z "$port" ]; then
+    port="19878"
+  fi
+
+  echo "http://127.0.0.1:${port}/"
+}
+
+ensure_frontend_deps() {
+  if [ -d "$ROOT_DIR/frontend/node_modules" ]; then
+    return 0
+  fi
+
+  echo "错误：前端依赖还没有安装。"
+  echo "请先运行：./manage.sh frontend install"
+  exit 1
 }
 
 backend() {
@@ -150,7 +261,8 @@ backend() {
     start)
       require_command cargo
       start_process "backend" "$pid_file" "$log_file" \
-        cargo run --manifest-path "$ROOT_DIR/backend/Cargo.toml" -p web-server
+        bash -c 'cd "$1" && shift && exec "$@"' _ "$ROOT_DIR/backend" cargo run -p web-server
+      wait_http_url "backend" "$pid_file" "$log_file" "$(backend_url)" 120
       ;;
     stop)
       stop_process "backend" "$pid_file"
@@ -173,6 +285,11 @@ frontend() {
   local app="${1:-}"
   local action="${2:-}"
 
+  if [ "$app" = "install" ]; then
+    install_frontend_deps
+    return 0
+  fi
+
   if [ -z "$app" ] || [ -z "$action" ]; then
     usage
     exit 1
@@ -190,13 +307,14 @@ frontend() {
   case "$action" in
     start)
       require_command pnpm
+      ensure_frontend_deps
       if is_running "$pid_file"; then
         echo "frontend:${app} 已在运行，PID: $(cat "$pid_file")"
       else
         start_process "frontend:${app}" "$pid_file" "$log_file" \
           pnpm -C "$app_dir" dev
       fi
-      print_frontend_url "$app" "$log_file"
+      print_frontend_url "$app" "$pid_file" "$log_file"
       ;;
     stop)
       stop_process "frontend:${app}" "$pid_file"
