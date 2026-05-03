@@ -49,6 +49,21 @@ AI 负责：
 
 ## 常用命令
 
+初始化前后端 env：
+
+```bash
+./manage.sh init_env
+```
+
+这个命令会同时初始化后端 env，并先执行前端 `pnpm install`，再生成前端 env 文件。
+
+也可以只初始化其中一端：
+
+```bash
+./manage.sh init_env backend
+./manage.sh init_env frontend
+```
+
 启动后端：
 
 ```bash

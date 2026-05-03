@@ -10,11 +10,15 @@ mkdir -p "$RUN_DIR" "$LOG_DIR"
 usage() {
   cat <<'EOF'
 用法：
+  ./manage.sh init_env [frontend|backend]
   ./manage.sh backend start|stop|restart|status
   ./manage.sh frontend install
   ./manage.sh frontend <app> start|stop|restart|status
 
 示例：
+  ./manage.sh init_env
+  ./manage.sh init_env frontend
+  ./manage.sh init_env backend
   ./manage.sh backend start
   ./manage.sh backend stop
   ./manage.sh frontend install
@@ -32,6 +36,52 @@ require_command() {
     echo "错误：缺少命令 '$1'"
     exit 1
   fi
+}
+
+run_frontend_init_env() {
+  require_command pnpm
+  echo "==> 安装前端依赖"
+  pnpm -C "$ROOT_DIR/frontend" install
+  echo "==> 初始化前端 env"
+  pnpm -C "$ROOT_DIR/frontend" env:init
+}
+
+run_backend_init_env() {
+  local script="$ROOT_DIR/backend/scripts/init.sh"
+
+  if [ ! -f "$script" ]; then
+    echo "错误：后端初始化脚本不存在：backend/scripts/init.sh"
+    exit 1
+  fi
+
+  echo "==> 初始化后端 env"
+  (
+    cd "$ROOT_DIR/backend"
+    bash scripts/init.sh
+  )
+  echo "后端 env 已初始化"
+}
+
+init_env() {
+  local target="${1:-all}"
+
+  case "$target" in
+    all)
+      run_backend_init_env
+      run_frontend_init_env
+      ;;
+    backend)
+      run_backend_init_env
+      ;;
+    frontend)
+      run_frontend_init_env
+      ;;
+    *)
+      echo "错误：未知 init_env 目标：$target"
+      usage
+      exit 1
+      ;;
+  esac
 }
 
 is_running() {
@@ -334,6 +384,10 @@ frontend() {
 }
 
 case "${1:-}" in
+  init_env)
+    shift
+    init_env "$@"
+    ;;
   backend)
     shift
     backend "$@"
