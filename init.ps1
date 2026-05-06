@@ -6,32 +6,32 @@ param(
     [string]$OutputDir = (Get-Location).Path
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = 'Stop'
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$StarterRepoDefault = "https://github.com/atlas-form/atlas-fullstack-starter.git"
-$StarterRefDefault = "main"
-$BackendSourceDefault = "https://github.com/atlas-form/db-center-template.git"
-$BackendRefDefault = "main"
-$FrontendSourceDefault = "https://github.com/atlas-form/react-mono-template.git"
-$FrontendRefDefault = "main"
+$StarterRepoDefault = 'https://github.com/atlas-form/atlas-fullstack-starter.git'
+$StarterRefDefault = 'main'
+$BackendSourceDefault = 'https://github.com/atlas-form/db-center-template.git'
+$BackendRefDefault = 'main'
+$FrontendSourceDefault = 'https://github.com/atlas-form/react-mono-template.git'
+$FrontendRefDefault = 'main'
 
 function Show-Usage {
-    @"
-用法：
+@"
+Usage:
   .\init.ps1 <project-name> [output-dir]
 
-示例：
+Examples:
   .\init.ps1 my-app
   .\init.ps1 my-app D:\workspace
 
-可选环境变量：
-  STARTER_REPO     脚手架仓库地址，用于拉取文档模板
-  STARTER_REF      脚手架仓库分支
-  BACKEND_SOURCE   后端模板来源，可以是 git 地址或本地目录
-  BACKEND_REF      后端分支、标签或提交，仅对 git 地址有效
-  FRONTEND_SOURCE  前端模板来源，可以是 git 地址或本地目录
-  FRONTEND_REF     前端分支、标签或提交，仅对 git 地址有效
+Optional environment variables:
+  STARTER_REPO     Starter repository URL for pulling project_template remotely
+  STARTER_REF      Starter repository branch/ref
+  BACKEND_SOURCE   Backend template source (git URL or local path)
+  BACKEND_REF      Backend branch/tag/commit (effective only for git source)
+  FRONTEND_SOURCE  Frontend template source (git URL or local path)
+  FRONTEND_REF     Frontend branch/tag/commit (effective only for git source)
 "@
 }
 
@@ -39,7 +39,7 @@ function Require-Command {
     param([string]$Name)
 
     if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
-        throw "错误：缺少命令 '$Name'"
+        throw "Missing required command: $Name"
     }
 }
 
@@ -50,7 +50,7 @@ function Test-GitUrl {
 }
 
 function New-TempDirectory {
-    $dir = Join-Path ([System.IO.Path]::GetTempPath()) ("atlas-fullstack-starter." + [System.Guid]::NewGuid().ToString("N"))
+    $dir = Join-Path ([System.IO.Path]::GetTempPath()) ("atlas-fullstack-starter." + [System.Guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $dir | Out-Null
     return $dir
 }
@@ -63,7 +63,7 @@ function Copy-DirectoryContents {
     )
 
     if (-not (Test-Path -LiteralPath $SourceDir -PathType Container)) {
-        throw "错误：目录不存在：$SourceDir"
+        throw "Directory not found: $SourceDir"
     }
 
     New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
@@ -87,7 +87,7 @@ function Copy-GitRepo {
     )
 
     git clone --depth 1 --branch $RepoRef $RepoUrl $TmpDir | Out-Null
-    Copy-DirectoryContents -SourceDir $TmpDir -TargetDir $TargetDir -ExcludeNames @(".git")
+    Copy-DirectoryContents -SourceDir $TmpDir -TargetDir $TargetDir -ExcludeNames @('.git')
 }
 
 function Generate-BackendWithCargoGenerate {
@@ -97,7 +97,7 @@ function Generate-BackendWithCargoGenerate {
         [string]$DestinationDir
     )
 
-    Require-Command "cargo-generate"
+    Require-Command 'cargo-generate'
     $parentDir = Split-Path -Parent $DestinationDir
     $backendName = Split-Path -Leaf $DestinationDir
     New-Item -ItemType Directory -Force -Path $parentDir | Out-Null
@@ -117,14 +117,14 @@ function Copy-FrontendTemplate {
         [string]$TargetDir
     )
 
-    Write-Host "==> 准备前端模板"
-    Write-Host "    来源：$Source"
+    Write-Host '==> Prepare frontend template'
+    Write-Host "    Source: $Source"
 
     if (Test-GitUrl $Source) {
-        Write-Host "    版本：$Ref"
+        Write-Host "    Ref: $Ref"
         Copy-GitRepo -RepoUrl $Source -RepoRef $Ref -TmpDir $TmpDir -TargetDir $TargetDir
     } else {
-        Copy-DirectoryContents -SourceDir $Source -TargetDir $TargetDir -ExcludeNames @(".git", "node_modules", "target", "dist", ".turbo", "logs", "tmp", ".DS_Store")
+        Copy-DirectoryContents -SourceDir $Source -TargetDir $TargetDir -ExcludeNames @('.git', 'node_modules', 'target', 'dist', '.turbo', 'logs', 'tmp', '.DS_Store')
     }
 }
 
@@ -135,15 +135,15 @@ function Resolve-TemplateSource {
         [string]$StarterTmpDir
     )
 
-    $localTemplateDir = Join-Path $ScriptDir "project_template"
-    $localReadmeTpl = Join-Path $localTemplateDir "ROOT_README.md.tpl"
+    $localTemplateDir = Join-Path $ScriptDir 'project_template'
+    $localReadmeTpl = Join-Path $localTemplateDir 'ROOT_README.md.tpl'
 
     if ((Test-Path -LiteralPath $localTemplateDir -PathType Container) -and (Test-Path -LiteralPath $localReadmeTpl -PathType Leaf)) {
         return $localTemplateDir
     }
 
     git clone --depth 1 --branch $StarterRef $StarterRepo $StarterTmpDir | Out-Null
-    return (Join-Path $StarterTmpDir "project_template")
+    return (Join-Path $StarterTmpDir 'project_template')
 }
 
 function Copy-ProjectTemplate {
@@ -153,10 +153,23 @@ function Copy-ProjectTemplate {
     )
 
     if (-not (Test-Path -LiteralPath $TemplateSourceDir -PathType Container)) {
-        throw "错误：文档模板目录不存在：$TemplateSourceDir"
+        throw "Template directory not found: $TemplateSourceDir"
     }
 
     Copy-DirectoryContents -SourceDir $TemplateSourceDir -TargetDir $ProjectDir
+}
+
+function Replace-InFile {
+    param(
+        [string]$Path,
+        [hashtable]$Map
+    )
+
+    $content = Get-Content -LiteralPath $Path -Raw
+    foreach ($key in $Map.Keys) {
+        $content = $content.Replace($key, $Map[$key])
+    }
+    Set-Content -LiteralPath $Path -Value $content -Encoding UTF8
 }
 
 function Merge-ApiDocs {
@@ -165,8 +178,8 @@ function Merge-ApiDocs {
         [string]$BackendDir
     )
 
-    $backendApiDir = Join-Path $BackendDir "API_CONTRACTS"
-    $rootApiDir = Join-Path $ProjectDir "API_DOCS"
+    $backendApiDir = Join-Path $BackendDir 'API_CONTRACTS'
+    $rootApiDir = Join-Path $ProjectDir 'API_DOCS'
 
     if (-not (Test-Path -LiteralPath $backendApiDir -PathType Container)) {
         return
@@ -176,22 +189,20 @@ function Merge-ApiDocs {
     Copy-DirectoryContents -SourceDir $backendApiDir -TargetDir $rootApiDir
     Remove-Item -LiteralPath $backendApiDir -Recurse -Force
 
-    Get-ChildItem -LiteralPath $BackendDir -Recurse -File -Filter "*.md" | ForEach-Object {
-        $content = Get-Content -LiteralPath $_.FullName -Raw
-        $content = $content.Replace("`API_CONTRACTS/", "`../API_DOCS/")
-        $content = $content.Replace("API_CONTRACTS/", "../API_DOCS/")
-        $content = $content.Replace("`API_CONTRACTS`", "`../API_DOCS`")
-        $content = $content.Replace("API_CONTRACTS", "../API_DOCS")
-        Set-Content -LiteralPath $_.FullName -Value $content -Encoding UTF8
+    $backendMap = @{
+        'API_CONTRACTS/' = '../API_DOCS/'
+        'API_CONTRACTS'  = '../API_DOCS'
+    }
+    Get-ChildItem -LiteralPath $BackendDir -Recurse -File -Filter '*.md' | ForEach-Object {
+        Replace-InFile -Path $_.FullName -Map $backendMap
     }
 
-    Get-ChildItem -LiteralPath $rootApiDir -Recurse -File -Filter "*.md" | ForEach-Object {
-        $content = Get-Content -LiteralPath $_.FullName -Raw
-        $content = $content.Replace("`API_CONTRACTS/", "`API_DOCS/")
-        $content = $content.Replace("API_CONTRACTS/", "API_DOCS/")
-        $content = $content.Replace("`API_CONTRACTS`", "`API_DOCS`")
-        $content = $content.Replace("API_CONTRACTS", "API_DOCS")
-        Set-Content -LiteralPath $_.FullName -Value $content -Encoding UTF8
+    $rootMap = @{
+        'API_CONTRACTS/' = 'API_DOCS/'
+        'API_CONTRACTS'  = 'API_DOCS'
+    }
+    Get-ChildItem -LiteralPath $rootApiDir -Recurse -File -Filter '*.md' | ForEach-Object {
+        Replace-InFile -Path $_.FullName -Map $rootMap
     }
 }
 
@@ -201,21 +212,21 @@ function Render-RootReadme {
         [string]$ProjectNameValue
     )
 
-    $templatePath = Join-Path $ProjectDir "ROOT_README.md.tpl"
-    $readmePath = Join-Path $ProjectDir "README.md"
+    $templatePath = Join-Path $ProjectDir 'ROOT_README.md.tpl'
+    $readmePath = Join-Path $ProjectDir 'README.md'
 
     if (-not (Test-Path -LiteralPath $templatePath -PathType Leaf)) {
-        throw "错误：缺少 ROOT_README.md.tpl 模板"
+        throw 'Missing ROOT_README.md.tpl template'
     }
 
-    (Get-Content -LiteralPath $templatePath -Raw).Replace("__PROJECT_NAME__", $ProjectNameValue) | Set-Content -LiteralPath $readmePath -Encoding UTF8
+    (Get-Content -LiteralPath $templatePath -Raw).Replace('__PROJECT_NAME__', $ProjectNameValue) | Set-Content -LiteralPath $readmePath -Encoding UTF8
     Remove-Item -LiteralPath $templatePath -Force
 }
 
 function Write-RootGitignore {
     param([string]$ProjectDir)
 
-    $content = @'
+    $content = @"
 .DS_Store
 .idea/
 .vscode/
@@ -224,15 +235,15 @@ function Write-RootGitignore {
 
 output/
 temp/
-'@
+"@
 
-    Set-Content -LiteralPath (Join-Path $ProjectDir ".gitignore") -Value $content -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $ProjectDir '.gitignore') -Value $content -Encoding UTF8
 }
 
 function Remove-GeneratedArtifacts {
     param([string]$ProjectDir)
 
-    $targets = @(".git", "node_modules", "target", "logs", "dist", ".turbo", "tmp")
+    $targets = @('.git', 'node_modules', 'target', 'logs', 'dist', '.turbo', 'tmp')
     foreach ($name in $targets) {
         Get-ChildItem -LiteralPath $ProjectDir -Force -Recurse -Directory -ErrorAction SilentlyContinue |
             Where-Object { $_.Name -eq $name } |
@@ -241,7 +252,7 @@ function Remove-GeneratedArtifacts {
     }
 
     Get-ChildItem -LiteralPath $ProjectDir -Force -Recurse -File -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -eq ".DS_Store" } |
+        Where-Object { $_.Name -eq '.DS_Store' } |
         Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
@@ -251,10 +262,10 @@ if ([string]::IsNullOrWhiteSpace($ProjectName)) {
 }
 
 if ($ProjectName -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*$') {
-    throw "错误：项目名 '$ProjectName' 非法。只允许字母、数字、点、下划线和中划线。"
+    throw "Invalid project name: $ProjectName. Allowed: letters, digits, dot, underscore, hyphen."
 }
 
-Require-Command "git"
+Require-Command 'git'
 
 $StarterRepo = if ($env:STARTER_REPO) { $env:STARTER_REPO } else { $StarterRepoDefault }
 $StarterRef = if ($env:STARTER_REF) { $env:STARTER_REF } else { $StarterRefDefault }
@@ -264,44 +275,44 @@ $FrontendSource = if ($env:FRONTEND_SOURCE) { $env:FRONTEND_SOURCE } else { $Fro
 $FrontendRef = if ($env:FRONTEND_REF) { $env:FRONTEND_REF } else { $FrontendRefDefault }
 
 $TargetDir = Join-Path $OutputDir $ProjectName
-$BackendDir = Join-Path $TargetDir "backend"
-$FrontendDir = Join-Path $TargetDir "frontend"
+$BackendDir = Join-Path $TargetDir 'backend'
+$FrontendDir = Join-Path $TargetDir 'frontend'
 $TmpDir = New-TempDirectory
-$TmpFrontendDir = Join-Path $TmpDir "frontend"
-$TmpStarterDir = Join-Path $TmpDir "starter"
+$TmpFrontendDir = Join-Path $TmpDir 'frontend'
+$TmpStarterDir = Join-Path $TmpDir 'starter'
 
 try {
     if (Test-Path -LiteralPath $TargetDir) {
-        throw "错误：目标目录已存在：$TargetDir"
+        throw "Target directory already exists: $TargetDir"
     }
 
     New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
     New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
 
-    Write-Host "==> 生成后端模板"
-    Write-Host "    来源：$BackendSource"
+    Write-Host '==> Generate backend template'
+    Write-Host "    Source: $BackendSource"
     if (Test-GitUrl $BackendSource) {
-        Write-Host "    版本：$BackendRef"
+        Write-Host "    Ref: $BackendRef"
     }
     Generate-BackendWithCargoGenerate -Source $BackendSource -Ref $BackendRef -DestinationDir $BackendDir
 
     Copy-FrontendTemplate -Source $FrontendSource -Ref $FrontendRef -TmpDir $TmpFrontendDir -TargetDir $FrontendDir
 
-    Write-Host "==> 拉取脚手架文档模板"
+    Write-Host '==> Copy project template'
     $templateSourceDir = Resolve-TemplateSource -StarterRepo $StarterRepo -StarterRef $StarterRef -StarterTmpDir $TmpStarterDir
     Copy-ProjectTemplate -TemplateSourceDir $templateSourceDir -ProjectDir $TargetDir
 
-    Write-Host "==> 统一 API 文档到根目录"
+    Write-Host '==> Merge API docs to root'
     Merge-ApiDocs -ProjectDir $TargetDir -BackendDir $BackendDir
 
-    Write-Host "==> 渲染根目录 README 和 .gitignore"
+    Write-Host '==> Render root README and .gitignore'
     Render-RootReadme -ProjectDir $TargetDir -ProjectNameValue $ProjectName
     Write-RootGitignore -ProjectDir $TargetDir
 
-    Write-Host "==> 清理模板残留文件"
+    Write-Host '==> Clean generated artifacts'
     Remove-GeneratedArtifacts -ProjectDir $TargetDir
 
-    Write-Host "==> 初始化新的 git 仓库"
+    Write-Host '==> Initialize new git repository'
     try {
         git -C $TargetDir init -b main | Out-Null
     } catch {
@@ -312,22 +323,22 @@ try {
         }
     }
 
-    Write-Host ""
-    Write-Host "初始化完成：$TargetDir"
-    Write-Host "当前项目已经是一个全新的 git 仓库"
-    Write-Host "模板仓库原本的 .git 目录不会保留到用户项目中"
-    Write-Host ""
-    Write-Host "目录结构："
+    Write-Host ''
+    Write-Host "Initialization completed: $TargetDir"
+    Write-Host 'Project is now a fresh git repository.'
+    Write-Host 'Template .git directories are not preserved in the generated project.'
+    Write-Host ''
+    Write-Host 'Directory structure:'
     Write-Host "  $TargetDir/"
-    Write-Host "  ├── temp/"
-    Write-Host "  ├── API_DOCS/"
-    Write-Host "  ├── frontend/"
-    Write-Host "  ├── backend/"
-    Write-Host "  ├── AGENTS.md"
-    Write-Host "  ├── README.md"
-    Write-Host "  ├── manage.sh"
-    Write-Host "  ├── AI_PROTOCOLS/"
-    Write-Host "  └── .gitignore"
+    Write-Host '  |- temp/'
+    Write-Host '  |- API_DOCS/'
+    Write-Host '  |- frontend/'
+    Write-Host '  |- backend/'
+    Write-Host '  |- AGENTS.md'
+    Write-Host '  |- README.md'
+    Write-Host '  |- manage.sh'
+    Write-Host '  |- AI_PROTOCOLS/'
+    Write-Host '  `- .gitignore'
 }
 finally {
     if (Test-Path -LiteralPath $TmpDir) {
