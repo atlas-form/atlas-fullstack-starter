@@ -8,7 +8,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$InvocationPath = $MyInvocation.MyCommand.Path
+$ScriptDir = if ([string]::IsNullOrWhiteSpace($InvocationPath)) { $null } else { Split-Path -Parent $InvocationPath }
 $StarterRepoDefault = 'https://github.com/atlas-form/atlas-fullstack-starter.git'
 $StarterRefDefault = 'main'
 $BackendSourceDefault = 'https://github.com/atlas-form/db-center-template.git'
@@ -135,11 +136,13 @@ function Resolve-TemplateSource {
         [string]$StarterTmpDir
     )
 
-    $localTemplateDir = Join-Path $ScriptDir 'project_template'
-    $localReadmeTpl = Join-Path $localTemplateDir 'ROOT_README.md.tpl'
+    if (-not [string]::IsNullOrWhiteSpace($ScriptDir)) {
+        $localTemplateDir = Join-Path $ScriptDir 'project_template'
+        $localReadmeTpl = Join-Path $localTemplateDir 'ROOT_README.md.tpl'
 
-    if ((Test-Path -LiteralPath $localTemplateDir -PathType Container) -and (Test-Path -LiteralPath $localReadmeTpl -PathType Leaf)) {
-        return $localTemplateDir
+        if ((Test-Path -LiteralPath $localTemplateDir -PathType Container) -and (Test-Path -LiteralPath $localReadmeTpl -PathType Leaf)) {
+            return $localTemplateDir
+        }
     }
 
     git clone --depth 1 --branch $StarterRef $StarterRepo $StarterTmpDir | Out-Null
