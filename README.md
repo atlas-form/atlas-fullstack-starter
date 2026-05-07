@@ -23,7 +23,9 @@ curl -fsSL https://raw.githubusercontent.com/atlas-form/atlas-fullstack-starter/
 ### Windows PowerShell
 
 ```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/atlas-form/atlas-fullstack-starter/main/init.ps1))) -ProjectName my-app
+$script = Join-Path $env:TEMP "atlas-fullstack-init.ps1"
+irm https://raw.githubusercontent.com/atlas-form/atlas-fullstack-starter/main/init.ps1 -OutFile $script
+& $script -ProjectName my-app
 ```
 
 执行完成后，会生成：
