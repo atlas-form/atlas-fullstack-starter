@@ -267,8 +267,21 @@ function Render-RootReadme {
         throw 'Missing ROOT_README.md.tpl template'
     }
 
-    (Get-Content -LiteralPath $templatePath -Raw).Replace('__PROJECT_NAME__', $ProjectNameValue) | Set-Content -LiteralPath $readmePath -Encoding UTF8
-    Remove-Item -LiteralPath $templatePath -Force
+    $map = @{
+        '__PROJECT_NAME__'       = $ProjectNameValue
+        '__MANAGE_SCRIPT__'      = 'manage.ps1'
+        '__MANAGE_SCRIPT_DESC__' = 'Windows PowerShell 本地启动、停止前后端服务的脚本'
+        '__MANAGE_CMD__'         = '.\manage.ps1'
+        '__MANAGE_CODE_LANG__'   = 'powershell'
+    }
+    Replace-InFile -Path $templatePath -Map $map
+    Move-Item -LiteralPath $templatePath -Destination $readmePath -Force
+}
+
+function Keep-PlatformManageScript {
+    param([string]$ProjectDir)
+
+    Remove-Item -LiteralPath (Join-Path $ProjectDir 'manage.sh') -Force -ErrorAction SilentlyContinue
 }
 
 function Write-RootGitignore {
@@ -358,6 +371,7 @@ try {
     Write-Host '==> Render root README and .gitignore'
     Render-RootReadme -ProjectDir $TargetDir -ProjectNameValue $ProjectName
     Write-RootGitignore -ProjectDir $TargetDir
+    Keep-PlatformManageScript -ProjectDir $TargetDir
 
     Write-Host '==> Clean generated artifacts'
     Remove-GeneratedArtifacts -ProjectDir $TargetDir
@@ -386,7 +400,6 @@ try {
     Write-Host '  |- backend/'
     Write-Host '  |- AGENTS.md'
     Write-Host '  |- README.md'
-    Write-Host '  |- manage.sh'
     Write-Host '  |- manage.ps1'
     Write-Host '  |- AI_PROTOCOLS/'
     Write-Host '  `- .gitignore'
