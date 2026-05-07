@@ -50,6 +50,47 @@ function Test-GitUrl {
     return $Value -match '^(http://|https://|git@|ssh://)'
 }
 
+function Invoke-NativeCommand {
+    param(
+        [scriptblock]$Command,
+        [string]$ErrorMessage
+    )
+
+    $global:LASTEXITCODE = 0
+    & $Command
+    if ($LASTEXITCODE -ne 0) {
+        throw "$ErrorMessage Exit code: $LASTEXITCODE"
+    }
+}
+
+function Invoke-GitClone {
+    param(
+        [string]$RepoUrl,
+        [string]$RepoRef,
+        [string]$TargetDir
+    )
+
+    $maxAttempts = 3
+    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+        if (Test-Path -LiteralPath $TargetDir) {
+            Remove-Item -LiteralPath $TargetDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+
+        $global:LASTEXITCODE = 0
+        git clone --depth 1 --branch $RepoRef $RepoUrl $TargetDir
+        if ($LASTEXITCODE -eq 0) {
+            return
+        }
+
+        if ($attempt -eq $maxAttempts) {
+            throw "Failed to clone repository after $maxAttempts attempts: $RepoUrl"
+        }
+
+        Write-Host "    Clone failed, retrying ($attempt/$maxAttempts)..."
+        Start-Sleep -Seconds (2 * $attempt)
+    }
+}
+
 function New-TempDirectory {
     $dir = Join-Path ([System.IO.Path]::GetTempPath()) ("atlas-fullstack-starter." + [System.Guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $dir | Out-Null
@@ -87,7 +128,7 @@ function Copy-GitRepo {
         [string]$TargetDir
     )
 
-    git clone --depth 1 --branch $RepoRef $RepoUrl $TmpDir | Out-Null
+    Invoke-GitClone -RepoUrl $RepoUrl -RepoRef $RepoRef -TargetDir $TmpDir
     Copy-DirectoryContents -SourceDir $TmpDir -TargetDir $TargetDir -ExcludeNames @('.git')
 }
 
@@ -104,9 +145,13 @@ function Generate-BackendWithCargoGenerate {
     New-Item -ItemType Directory -Force -Path $parentDir | Out-Null
 
     if (Test-GitUrl $Source) {
-        cargo generate --git $Source --branch $Ref --destination $parentDir --name $backendName --silent --vcs none
+        Invoke-NativeCommand -ErrorMessage "Failed to generate backend template from git: $Source" -Command {
+            cargo generate --git $Source --branch $Ref --destination $parentDir --name $backendName --silent --vcs none
+        }
     } else {
-        cargo generate --path $Source --destination $parentDir --name $backendName --silent --vcs none
+        Invoke-NativeCommand -ErrorMessage "Failed to generate backend template from path: $Source" -Command {
+            cargo generate --path $Source --destination $parentDir --name $backendName --silent --vcs none
+        }
     }
 }
 
@@ -145,7 +190,7 @@ function Resolve-TemplateSource {
         }
     }
 
-    git clone --depth 1 --branch $StarterRef $StarterRepo $StarterTmpDir | Out-Null
+    Invoke-GitClone -RepoUrl $StarterRepo -RepoRef $StarterRef -TargetDir $StarterTmpDir
     return (Join-Path $StarterTmpDir 'project_template')
 }
 
@@ -283,6 +328,7 @@ $FrontendDir = Join-Path $TargetDir 'frontend'
 $TmpDir = New-TempDirectory
 $TmpFrontendDir = Join-Path $TmpDir 'frontend'
 $TmpStarterDir = Join-Path $TmpDir 'starter'
+$ProjectDirCreated = $false
 
 try {
     if (Test-Path -LiteralPath $TargetDir) {
@@ -291,6 +337,7 @@ try {
 
     New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
     New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
+    $ProjectDirCreated = $true
 
     Write-Host '==> Generate backend template'
     Write-Host "    Source: $BackendSource"
@@ -342,6 +389,13 @@ try {
     Write-Host '  |- manage.sh'
     Write-Host '  |- AI_PROTOCOLS/'
     Write-Host '  `- .gitignore'
+}
+catch {
+    if ($ProjectDirCreated -and (Test-Path -LiteralPath $TargetDir)) {
+        Write-Host "Initialization failed. Removing partial project directory: $TargetDir"
+        Remove-Item -LiteralPath $TargetDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    throw
 }
 finally {
     if (Test-Path -LiteralPath $TmpDir) {
