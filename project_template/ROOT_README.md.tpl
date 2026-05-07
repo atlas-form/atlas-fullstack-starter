@@ -10,7 +10,8 @@
 - `API_DOCS/`：项目唯一 API 文档入口
 - `frontend/`：前端项目
 - `backend/`：后端项目
-- `manage.sh`：本地启动、停止前后端服务的脚本
+- `manage.sh`：macOS / Linux 本地启动、停止前后端服务的脚本
+- `manage.ps1`：Windows PowerShell 本地启动、停止前后端服务的脚本
 - `AGENTS.md`：AI 统一入口，负责指向前端和后端子项目规则
 
 ## 快速开始
@@ -48,6 +49,8 @@ AI 负责：
 4. 前端开发应以根目录 `API_DOCS/` 里的接口文档为准
 
 ## 常用命令
+
+macOS / Linux 使用 `./manage.sh`，Windows PowerShell 使用 `.\manage.ps1`。下面示例先写 macOS / Linux 命令，Windows 用户把 `./manage.sh` 换成 `.\manage.ps1` 即可。
 
 初始化前后端 env：
 
@@ -138,7 +141,7 @@ temp/logs/
 1. `temp/REQUIREMENTS/`：放需求文档，也可以不用，直接在聊天里描述需求
 2. `temp/DEVELOPMENT_DOCS/`：AI 写前后端开发文档
 3. `API_DOCS/`：AI 写 API 文档，框架已有 API 和新业务 API 都放这里
-4. `manage.sh`：启动、停止、查看服务状态
+4. `manage.sh` / `manage.ps1`：启动、停止、查看服务状态
 5. `frontend/`：前端代码
 6. `backend/`：后端代码
 

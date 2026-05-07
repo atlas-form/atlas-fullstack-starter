@@ -387,6 +387,7 @@ try {
     Write-Host '  |- AGENTS.md'
     Write-Host '  |- README.md'
     Write-Host '  |- manage.sh'
+    Write-Host '  |- manage.ps1'
     Write-Host '  |- AI_PROTOCOLS/'
     Write-Host '  `- .gitignore'
 }
